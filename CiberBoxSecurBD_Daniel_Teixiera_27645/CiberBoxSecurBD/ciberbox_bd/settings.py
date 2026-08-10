@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+import re
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -22,6 +23,22 @@ if os.getenv('DJANGO_ALLOW_VERCEL_WILDCARD', str(not DEBUG)).lower() == 'true':
 
 if DEBUG:
     ALLOWED_HOSTS = list(set(ALLOWED_HOSTS + ['*']))
+
+def _parse_pg_url(url: str) -> dict:
+    m = re.match(
+        r'^postgres(?:ql)?://(?P<user>[^:@]+)(?::(?P<pass>[^@]*))?@(?P<host>[^:/]+)(?::(?P<port>\d+))?/(?P<db>[^?]+)',
+        url,
+    )
+    if not m:
+        raise ValueError(f'DATABASE_URL invalida: {url[:30]}...')
+    d = m.groupdict()
+    return {
+        'NAME': d['db'],
+        'USER': d['user'],
+        'PASSWORD': d['pass'] or '',
+        'HOST': d['host'],
+        'PORT': d['port'] or '5432',
+    }
     
 INSTALLED_APPS = [
     'django.contrib.sessions',
@@ -58,20 +75,41 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'ciberbox_bd.wsgi.application'
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('POSTGRES_DB', 'ciberbox_bd'),
-        'USER': os.getenv('POSTGRES_USER', 'ciberbox_user'),
-        'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'ciberbox_password'),
-        'HOST': os.getenv('POSTGRES_HOST', '127.0.0.1'),
-        'PORT': os.getenv('POSTGRES_PORT', '5432'),
-        'CONN_MAX_AGE': 60,
-        'OPTIONS': {
-            'connect_timeout': 5,
-        },
+
+_db_url = os.getenv('DATABASE_URL')
+if _db_url:
+    _p = _parse_pg_url(_db_url)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': _p['NAME'],
+            'USER': _p['USER'],
+            'PASSWORD': _p['PASSWORD'],
+            'HOST': _p['HOST'],
+            'PORT': _p['PORT'],
+            'CONN_MAX_AGE': 60,
+            'OPTIONS': {
+                'connect_timeout': 10,
+                'sslmode': os.getenv('POSTGRES_SSLMODE', 'require'),
+            },
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('POSTGRES_DB', 'ciberbox_bd'),
+            'USER': os.getenv('POSTGRES_USER', 'ciberbox_user'),
+            'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'ciberbox_password'),
+            'HOST': os.getenv('POSTGRES_HOST', '127.0.0.1'),
+            'PORT': os.getenv('POSTGRES_PORT', '5432'),
+            'CONN_MAX_AGE': 60,
+            'OPTIONS': {
+                'connect_timeout': 10,
+                'sslmode': os.getenv('POSTGRES_SSLMODE', 'prefer'),
+            },
+        }
+    }
 
 LANGUAGE_CODE = 'pt-pt'
 TIME_ZONE = 'Europe/Lisbon'
