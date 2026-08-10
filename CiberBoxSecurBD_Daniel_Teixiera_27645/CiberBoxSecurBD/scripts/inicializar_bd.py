@@ -2,6 +2,7 @@
 from pathlib import Path
 import argparse
 import os
+import re
 import sys
 
 from dotenv import load_dotenv
@@ -10,6 +11,21 @@ import psycopg
 ROOT = Path(__file__).resolve().parents[1]
 load_dotenv(ROOT / '.env')
 
+def _parse_pg_url(url: str) -> dict:
+    m = re.match(
+        r'^postgres(?:ql)?://(?P<user>[^:@]+)(?::(?P<pass>[^@]*))?@(?P<host>[^:/]+)(?::(?P<port>\d+))?/(?P<db>[^?]+)',
+        url,
+    )
+    if not m:
+        raise ValueError(f'DATABASE_URL invalida: {url[:30]}...')
+    d = m.groupdict()
+    return {
+        'dbname': d['db'],
+        'user': d['user'],
+        'password': d['pass'] or '',
+        'host': d['host'],
+        'port': d['port'] or '5432',
+    }
 
 def executar_script(conexao, caminho: Path) -> None:
     sql = caminho.read_text(encoding='utf-8')
@@ -23,15 +39,22 @@ def main() -> int:
     parser.add_argument('--limpar', action='store_true', help='Executa a limpeza opcional antes da criação.')
     args = parser.parse_args()
 
-    dsn = {
-        'dbname': os.getenv('POSTGRES_DB', 'ciberbox_bd'),
-        'user': os.getenv('POSTGRES_USER', 'ciberbox_user'),
-        'password': os.getenv('POSTGRES_PASSWORD', 'ciberbox_password'),
-        'host': os.getenv('POSTGRES_HOST', '127.0.0.1'),
-        'port': os.getenv('POSTGRES_PORT', '5432'),
-    }
+db_url = os.getenv('DATABASE_URL')
+    if db_url:
+        dsn = _parse_pg_url(db_url)
+        sslmode = os.getenv('POSTGRES_SSLMODE', 'require')
+    else:
+        dsn = {
+            'dbname': os.getenv('POSTGRES_DB', 'ciberbox_bd'),
+            'user': os.getenv('POSTGRES_USER', 'ciberbox_user'),
+            'password': os.getenv('POSTGRES_PASSWORD', 'ciberbox_password'),
+            'host': os.getenv('POSTGRES_HOST', '127.0.0.1'),
+            'port': os.getenv('POSTGRES_PORT', '5432'),
+        }
+        sslmode = os.getenv('POSTGRES_SSLMODE', 'prefer')
+    
     try:
-        with psycopg.connect(**dsn, autocommit=True) as conexao:
+        with psycopg.connect(**dsn, autocommit=True, sslmode=sslmode) as conexao:
             if args.limpar:
                 executar_script(conexao, ROOT / 'sql' / '00_limpeza_opcional.sql')
             executar_script(conexao, ROOT / 'sql' / '01_criacao.sql')
