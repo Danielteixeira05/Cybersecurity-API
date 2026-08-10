@@ -9,6 +9,20 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'alterar-esta-chave-em-producao')
 DEBUG = os.getenv('DJANGO_DEBUG', 'True').lower() == 'true'
 ALLOWED_HOSTS = [h.strip() for h in os.getenv('DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost').split(',') if h.strip()]
 
+_vercel_vars = ['VERCEL_URL', 'VERCEL_BRANCH_URL', 'VERCEL_PROJECT_PRODUCTION_URL', 'NEXT_PUBLIC_VERCEL_URL']
+for _v in _vercel_vars:
+    _val = os.getenv(_v)
+    if _val:
+        _clean = _val.replace('https://', '').replace('http://', '').split('/')[0]
+        if _clean and _clean not in ALLOWED_HOSTS:
+            ALLOWED_HOSTS.append(_clean)
+
+if os.getenv('DJANGO_ALLOW_VERCEL_WILDCARD', str(not DEBUG)).lower() == 'true':
+    ALLOWED_HOSTS.extend([h for h in ['.vercel.app'] if h not in ALLOWED_HOSTS])
+
+if DEBUG:
+    ALLOWED_HOSTS = list(set(ALLOWED_HOSTS + ['*']))
+    
 INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
