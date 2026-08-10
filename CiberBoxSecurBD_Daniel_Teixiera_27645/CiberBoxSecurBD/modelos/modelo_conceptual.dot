@@ -1,0 +1,46 @@
+digraph conceptual {
+  graph [rankdir=LR, bgcolor="white", pad=0.3, nodesep=0.55, ranksep=0.8, fontname="Arial", label="Modelo conceptual - CiberBoxSecurBD (IDEF1X simplificado)", labelloc=t, fontsize=18];
+  node [shape=record, fontname="Arial", fontsize=10, style="rounded,filled", fillcolor="#f8faff", color="#2456ff"];
+  edge [fontname="Arial", fontsize=9, color="#4d5d7a", arrowsize=0.7];
+
+  perfis [label="{PERFIS|Identificador\lCódigo\lNome\l}"];
+  utilizadores [label="{UTILIZADORES|Identificador\lNome\lEmail\lEstado\l}"];
+  clientes [label="{CLIENTES|Identificador\lNome\lNIF\lEstado\l}"];
+  utilizadores_clientes [label="{UTILIZADORES_CLIENTES|Utilizador\lCliente\lPrincipal\l}", fillcolor="#eef3ff"];
+  contactos [label="{CONTACTOS_CLIENTES|Identificador\lTipo\lNome\lEmail\l}"];
+  estados_conf [label="{ESTADOS_CONFORMIDADE|Identificador\lCódigo\lNome\l}"];
+  avaliacoes [label="{AVALIACOES_RISCO|Identificador\lData\lNível\lPontuação\l}"];
+  importacoes [label="{IMPORTACOES_EXCEL|Identificador\lTipo\lEstado\lContagens\l}"];
+  linhas [label="{LINHAS_IMPORTACAO|Identificador\lNúmero da linha\lEstado\lErro\l}"];
+  ativos [label="{ATIVOS_TECNOLOGICOS|Identificador\lInventário\lNome\lCriticidade\l}"];
+  incidentes [label="{INCIDENTES|Identificador\lCódigo\lData/hora\lGravidade\lEstado\l}"];
+  documentos [label="{DOCUMENTOS|Identificador\lCategoria\lTítulo\lMetadados\l}"];
+  estados_ped [label="{ESTADOS_PEDIDOS|Identificador\lCódigo\lNome\lEstado final\l}"];
+  pedidos [label="{PEDIDOS|Identificador\lAssunto\lPrioridade\lDatas\l}"];
+  mensagens [label="{MENSAGENS_PEDIDOS|Identificador\lMensagem\lData\l}"];
+  historico [label="{HISTORICO_ESTADOS_PEDIDOS|Identificador\lEstado anterior\lEstado novo\lData\l}"];
+  logs [label="{LOGS_ATIVIDADE|Identificador\lAção\lEntidade\lData\l}"];
+
+  perfis -> utilizadores [label="1  classifica  0..N", arrowhead=none];
+  utilizadores -> utilizadores_clientes [label="1  possui  0..N", arrowhead=none, style=bold];
+  clientes -> utilizadores_clientes [label="1  possui  0..N", arrowhead=none, style=bold];
+  clientes -> contactos [label="1  tem  0..N", arrowhead=none];
+  clientes -> avaliacoes [label="1  recebe  0..N", arrowhead=none];
+  estados_conf -> avaliacoes [label="1  classifica  0..N", arrowhead=none];
+  clientes -> importacoes [label="1  origina  0..N", arrowhead=none];
+  importacoes -> linhas [label="1  detalha  1..N", arrowhead=none];
+  clientes -> ativos [label="1  possui  0..N", arrowhead=none];
+  importacoes -> ativos [label="0..1  origina  0..N", arrowhead=none, style=dashed];
+  clientes -> incidentes [label="1  regista  0..N", arrowhead=none];
+  importacoes -> incidentes [label="0..1  origina  0..N", arrowhead=none, style=dashed];
+  clientes -> documentos [label="1  possui  0..N", arrowhead=none];
+  clientes -> pedidos [label="1  cria  0..N", arrowhead=none];
+  estados_ped -> pedidos [label="1  define  0..N", arrowhead=none];
+  pedidos -> mensagens [label="1  contém  0..N", arrowhead=none];
+  pedidos -> historico [label="1  possui  1..N", arrowhead=none];
+  utilizadores -> avaliacoes [label="0..1  regista  0..N", arrowhead=none, style=dashed];
+  utilizadores -> documentos [label="0..1  submete  0..N", arrowhead=none, style=dashed];
+  utilizadores -> pedidos [label="1  cria/acompanha  0..N", arrowhead=none];
+  utilizadores -> mensagens [label="1  escreve  0..N", arrowhead=none];
+  utilizadores -> logs [label="0..1  gera  0..N", arrowhead=none, style=dashed];
+}

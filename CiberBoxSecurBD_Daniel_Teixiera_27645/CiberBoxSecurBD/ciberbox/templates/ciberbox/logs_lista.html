@@ -1,0 +1,4 @@
+{% extends 'ciberbox/base.html' %}{% block title %}Logs{% endblock %}{% block content %}
+<div class="page-header"><div><h1>Logs de atividade</h1><p class="muted">Últimas 200 ações, sem passwords, tokens ou conteúdo dos documentos.</p></div></div>
+<div class="card table-wrap"><table><thead><tr><th>Data</th><th>Utilizador</th><th>Ação</th><th>Entidade</th><th>ID</th><th>IP</th><th>Detalhes</th></tr></thead><tbody>{% for l in logs %}<tr><td>{{ l.criado_em|date:'d/m/Y H:i:s' }}</td><td>{{ l.utilizador_nome|default:'Sistema' }}</td><td>{{ l.acao }}</td><td>{{ l.entidade }}</td><td>{{ l.entidade_id|default:'—' }}</td><td>{{ l.endereco_ip|default:'—' }}</td><td><code>{{ l.detalhes }}</code></td></tr>{% empty %}<tr><td colspan="7">Sem logs.</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

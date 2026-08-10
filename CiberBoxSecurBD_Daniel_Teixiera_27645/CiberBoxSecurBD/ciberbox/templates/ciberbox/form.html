@@ -1,0 +1,12 @@
+{% extends 'ciberbox/base.html' %}
+{% block title %}{{ titulo }}{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>{{ titulo }}</h1><p class="muted">Os campos assinalados com * são obrigatórios.</p></div></div>
+<div class="card form-card">
+<form method="post" {% if multipart %}enctype="multipart/form-data"{% endif %} novalidate>
+    {% csrf_token %}
+    {% include 'ciberbox/form_campos.html' with form=form %}
+    <div class="actions"><button class="btn btn-primary">Guardar</button><a class="btn btn-secondary" href="javascript:history.back()">Cancelar</a></div>
+</form>
+</div>
+{% endblock %}

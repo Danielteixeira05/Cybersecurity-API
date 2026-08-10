@@ -1,0 +1,50 @@
+{% load static %}
+<!doctype html>
+<html lang="pt-PT">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}CiberBoxSecurBD{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'ciberbox/css/styles.css' %}">
+</head>
+<body>
+{% if utilizador_sessao %}
+<header class="topbar">
+    <a class="brand" href="{% url 'dashboard' %}">
+        <img src="{% static 'ciberbox/img/logo.png' %}" alt="CiberBoxSecur">
+    </a>
+    <div class="user-area">
+        <span><strong>{{ utilizador_sessao.nome }}</strong><br><small>{{ utilizador_sessao.perfil_nome }}</small></span>
+        <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="btn btn-light btn-small">Terminar sessao</button></form>
+    </div>
+</header>
+<div class="layout">
+    <nav class="sidebar" aria-label="Navegacao principal">
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <a href="{% url 'clientes_lista' %}">Clientes</a>
+        <a href="{% url 'ativos_lista' %}">Ativos</a>
+        <a href="{% url 'incidentes_lista' %}">Incidentes</a>
+        <a href="{% url 'avaliacoes_lista' %}">Avaliacoes</a>
+        <a href="{% url 'documentos_lista' %}">Documentos</a>
+        <a href="{% url 'pedidos_lista' %}">Pedidos</a>
+        <a href="{% url 'importacao_excel' %}">Importar Excel</a>
+        {% if utilizador_sessao.perfil_codigo == 'ADMINISTRADOR' %}
+            <a href="{% url 'utilizadores_lista' %}">Utilizadores</a>
+            <a href="{% url 'logs_lista' %}">Logs</a>
+        {% endif %}
+    </nav>
+    <main class="content">
+{% else %}
+<main class="public-content">
+{% endif %}
+        {% if messages %}
+        <div class="messages">
+            {% for message in messages %}<div class="alert alert-{{ message.tags|default:'info' }}">{{ message }}</div>{% endfor %}
+        </div>
+        {% endif %}
+        {% block content %}{% endblock %}
+    </main>
+{% if utilizador_sessao %}</div>{% endif %}
+<footer>Projeto de Bases de Dados - Daniel Teixiera, n.º 27645 - 2025/2026</footer>
+</body>
+</html>

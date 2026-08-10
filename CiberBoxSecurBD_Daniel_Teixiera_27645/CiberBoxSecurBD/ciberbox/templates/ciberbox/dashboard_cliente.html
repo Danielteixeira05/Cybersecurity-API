@@ -1,0 +1,12 @@
+{% extends 'ciberbox/base.html' %}
+{% block title %}Área do cliente{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>{{ resumo.nome|default:'Área do cliente' }}</h1><p class="muted">Resumo restrito à organização associada à conta.</p></div></div>
+<div class="kpi-grid">
+<article class="kpi"><span>Ativos</span><strong>{{ resumo.total_ativos|default:0 }}</strong></article>
+<article class="kpi"><span>Incidentes</span><strong>{{ resumo.total_incidentes|default:0 }}</strong></article>
+<article class="kpi"><span>Documentos</span><strong>{{ resumo.total_documentos|default:0 }}</strong></article>
+<article class="kpi"><span>Pedidos</span><strong>{{ resumo.total_pedidos|default:0 }}</strong></article>
+</div>
+<div class="card"><h2>Estado atual</h2><dl class="details"><dt>Conformidade</dt><dd>{{ resumo.estado_conformidade|default:'Sem avaliação' }}</dd><dt>Nível de risco</dt><dd>{{ resumo.nivel_risco|default:'—' }}</dd><dt>Pontuação</dt><dd>{{ resumo.pontuacao|default:'—' }}</dd></dl></div>
+{% endblock %}

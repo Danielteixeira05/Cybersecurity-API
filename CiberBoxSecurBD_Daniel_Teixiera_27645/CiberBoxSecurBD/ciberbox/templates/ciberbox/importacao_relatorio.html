@@ -1,0 +1,5 @@
+{% extends 'ciberbox/base.html' %}{% block title %}Relatório de importação{% endblock %}{% block content %}
+<div class="page-header"><div><h1>Relatório da importação #{{ importacao.id }}</h1><p class="muted">{{ importacao.nome_ficheiro_original }} · {{ importacao.tipo }} · {{ importacao.importado_em|date:'d/m/Y H:i' }}</p></div><span class="badge big-badge">{{ importacao.estado }}</span></div>
+<div class="kpi-grid"><article class="kpi"><span>Total</span><strong>{{ importacao.total_linhas }}</strong></article><article class="kpi"><span>Importadas</span><strong>{{ importacao.linhas_importadas }}</strong></article><article class="kpi"><span>Rejeitadas</span><strong>{{ importacao.linhas_rejeitadas }}</strong></article></div>
+<div class="card table-wrap"><table><thead><tr><th>Linha</th><th>Estado</th><th>Erro</th><th>Dados</th></tr></thead><tbody>{% for l in linhas %}<tr><td>{{ l.numero_linha }}</td><td><span class="badge {% if l.estado == 'IMPORTADA' %}success{% else %}danger{% endif %}">{{ l.estado }}</span></td><td>{{ l.erro|default:'—' }}</td><td><code class="json-code">{{ l.dados }}</code></td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

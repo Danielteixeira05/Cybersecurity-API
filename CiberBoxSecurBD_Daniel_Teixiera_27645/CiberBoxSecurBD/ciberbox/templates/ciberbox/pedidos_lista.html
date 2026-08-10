@@ -1,0 +1,5 @@
+{% extends 'ciberbox/base.html' %}{% block title %}Pedidos{% endblock %}{% block content %}
+<div class="page-header"><div><h1>Pedidos e tickets</h1><p class="muted">Interação entre cliente e colaborador, com histórico de estados.</p></div><a class="btn btn-primary" href="{% url 'pedido_criar' %}">Novo pedido</a></div>
+<div class="card table-wrap"><table><thead><tr><th>Data</th><th>Cliente</th><th>Assunto</th><th>Prioridade</th><th>Estado</th><th>Atribuído a</th><th></th></tr></thead><tbody>
+{% for p in pedidos %}<tr><td>{{ p.criado_em|date:'d/m/Y H:i' }}</td><td>{{ p.cliente_nome }}</td><td><a href="{% url 'pedido_detalhe' p.id %}"><strong>{{ p.assunto }}</strong></a></td><td>{{ p.prioridade }}</td><td><span class="badge">{{ p.estado_nome }}</span></td><td>{{ p.atribuido_a_nome|default:'—' }}</td><td><a class="btn btn-small" href="{% url 'pedido_detalhe' p.id %}">Abrir</a></td></tr>{% empty %}<tr><td colspan="7">Sem pedidos.</td></tr>{% endfor %}
+</tbody></table></div>{% endblock %}

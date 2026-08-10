@@ -1,0 +1,35 @@
+digraph logical {
+  graph [rankdir=LR, bgcolor="white", pad=0.25, nodesep=0.4, ranksep=0.65, fontname="Arial", label="Modelo lógico relacional - CiberBoxSecurBD", labelloc=t, fontsize=18];
+  node [shape=record, fontname="Arial", fontsize=8.5, style="filled", fillcolor="#fbfcff", color="#3957a8"];
+  edge [color="#67748e", arrowsize=0.55];
+  perfis [label="{perfis|PK id\lcodigo UQ\lnome UQ\l}"];
+  utilizadores [label="{utilizadores|PK id\lFK perfil_id\lnome\lemail UQ\lpassword_hash\lativo\l}"];
+  clientes [label="{clientes|PK id\lnome\lnif UQ\lemail\lsetor_atividade\lativo\l}"];
+  uc [label="{utilizadores_clientes|PK/FK utilizador_id\lPK/FK cliente_id\lprincipal\l}"];
+  contactos [label="{contactos_clientes|PK id\lFK cliente_id\ltipo\lnome\lemail\l}"];
+  ec [label="{estados_conformidade|PK id\lcodigo UQ\lnome\lordem UQ\l}"];
+  ar [label="{avaliacoes_risco|PK id\lFK cliente_id\lFK estado_conformidade_id\lFK criado_por?\ldata_avaliacao\lnivel_risco\lpontuacao\l}"];
+  ie [label="{importacoes_excel|PK id\lFK cliente_id\lFK importado_por?\ltipo\lestado\lcontagens\l}"];
+  li [label="{linhas_importacao|PK id\lFK importacao_id\lnumero_linha\lestado\ldados JSONB\l}"];
+  at [label="{ativos_tecnologicos|PK id\lFK cliente_id\lFK importacao_id?\lFK criado_por?\lnumero_inventario\lnome\lcriticidade\l}"];
+  inc [label="{incidentes|PK id\lFK cliente_id\lFK importacao_id?\lFK criado_por?\lcodigo\ldata_hora_incidente\lgravidade\lestado\l}"];
+  doc [label="{documentos|PK id\lFK cliente_id\lFK submetido_por?\lcategoria\ltitulo\lcaminho_ficheiro\lhash_sha256\l}"];
+  ep [label="{estados_pedidos|PK id\lcodigo UQ\lnome\lestado_final\l}"];
+  ped [label="{pedidos|PK id\lFK cliente_id\lFK criado_por\lFK atribuido_a?\lFK estado_id\lassunto\lprioridade\l}"];
+  msg [label="{mensagens_pedidos|PK id\lFK pedido_id\lFK autor_id\lmensagem\l}"];
+  hist [label="{historico_estados_pedidos|PK id\lFK pedido_id\lFK estado_anterior_id?\lFK estado_novo_id\lFK alterado_por?\l}"];
+  log [label="{logs_atividade|PK id\lFK utilizador_id?\lacao\lentidade\ldetalhes JSONB\l}"];
+
+  perfis -> utilizadores;
+  utilizadores -> uc; clientes -> uc;
+  clientes -> contactos;
+  clientes -> ar; ec -> ar; utilizadores -> ar;
+  clientes -> ie; utilizadores -> ie; ie -> li;
+  clientes -> at; ie -> at; utilizadores -> at;
+  clientes -> inc; ie -> inc; utilizadores -> inc;
+  clientes -> doc; utilizadores -> doc;
+  clientes -> ped; utilizadores -> ped; ep -> ped;
+  ped -> msg; utilizadores -> msg;
+  ped -> hist; ep -> hist; utilizadores -> hist;
+  utilizadores -> log;
+}

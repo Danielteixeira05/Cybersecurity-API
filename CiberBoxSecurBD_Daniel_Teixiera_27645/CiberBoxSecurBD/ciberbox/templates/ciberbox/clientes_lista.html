@@ -1,0 +1,7 @@
+{% extends 'ciberbox/base.html' %}{% block title %}Clientes{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Clientes</h1><p class="muted">Organizações acompanhadas pela CiberBoxSecur.</p></div>{% if utilizador_sessao.perfil_codigo != 'CLIENTE' %}<a class="btn btn-primary" href="{% url 'cliente_criar' %}">Novo cliente</a>{% endif %}</div>
+<div class="card table-wrap"><table><thead><tr><th>Nome</th><th>NIF</th><th>Setor</th><th>Conformidade</th><th>Ativos</th><th>Incidentes</th><th>Estado</th><th></th></tr></thead><tbody>
+{% for c in clientes %}<tr><td><a href="{% url 'cliente_detalhe' c.id %}"><strong>{{ c.nome }}</strong></a></td><td>{{ c.nif }}</td><td>{{ c.setor_atividade|default:'—' }}</td><td>{{ c.estado_conformidade|default:'Sem avaliação' }}</td><td>{{ c.total_ativos }}</td><td>{{ c.total_incidentes }}</td><td>{% if c.ativo %}<span class="badge success">Ativo</span>{% else %}<span class="badge danger">Inativo</span>{% endif %}</td><td class="actions-inline">{% if utilizador_sessao.perfil_codigo != 'CLIENTE' %}<a class="btn btn-small" href="{% url 'cliente_editar' c.id %}">Editar</a>{% endif %}</td></tr>{% empty %}<tr><td colspan="8">Sem clientes.</td></tr>{% endfor %}
+</tbody></table></div>
+{% endblock %}

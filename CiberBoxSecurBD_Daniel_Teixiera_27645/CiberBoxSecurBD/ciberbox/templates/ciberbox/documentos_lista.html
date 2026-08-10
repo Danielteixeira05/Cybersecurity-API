@@ -1,0 +1,5 @@
+{% extends 'ciberbox/base.html' %}{% block title %}Documentos{% endblock %}{% block content %}
+<div class="page-header"><div><h1>Documentos privados</h1><p class="muted">Metadados na base de dados; conteúdo guardado fora da pasta pública.</p></div><a class="btn btn-primary" href="{% url 'documento_criar' %}">Submeter documento</a></div>
+<div class="card table-wrap"><table><thead><tr><th>Data</th><th>Cliente</th><th>Categoria</th><th>Título</th><th>Ficheiro</th><th>Tamanho</th><th></th></tr></thead><tbody>
+{% for d in documentos %}<tr><td>{{ d.submetido_em|date:'d/m/Y H:i' }}</td><td>{{ d.cliente_nome }}</td><td>{{ d.categoria }}</td><td>{{ d.titulo }}</td><td>{{ d.nome_ficheiro_original }}</td><td>{{ d.tamanho_bytes|filesizeformat }}</td><td class="actions-inline"><a class="btn btn-small" href="{% url 'documento_download' d.id %}">Descarregar</a><form method="post" action="{% url 'documento_eliminar' d.id %}" onsubmit="return confirm('Eliminar documento?')">{% csrf_token %}<button class="btn btn-danger btn-small">Eliminar</button></form></td></tr>{% empty %}<tr><td colspan="7">Sem documentos.</td></tr>{% endfor %}
+</tbody></table></div>{% endblock %}

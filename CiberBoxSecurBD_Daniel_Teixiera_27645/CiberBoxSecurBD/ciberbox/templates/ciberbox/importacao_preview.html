@@ -1,0 +1,6 @@
+{% extends 'ciberbox/base.html' %}{% block title %}Pré-visualização da importação{% endblock %}{% block content %}
+<div class="page-header"><div><h1>Pré-visualização</h1><p class="muted">{{ preview.nome_ficheiro_original }} · folha {{ preview.folha }} · {{ preview.cliente_nome }}</p></div></div>
+<div class="kpi-grid"><article class="kpi"><span>Total</span><strong>{{ preview.linhas|length }}</strong></article><article class="kpi"><span>Válidas</span><strong>{{ preview.validas }}</strong></article><article class="kpi"><span>Rejeitadas</span><strong>{{ preview.rejeitadas }}</strong></article></div>
+<div class="card table-wrap"><table><thead><tr><th>Linha</th><th>Estado</th><th>Dados reconhecidos</th><th>Erro</th></tr></thead><tbody>{% for l in preview.linhas %}<tr><td>{{ l.numero_linha }}</td><td>{% if l.erro %}<span class="badge danger">Rejeitada</span>{% else %}<span class="badge success">Válida</span>{% endif %}</td><td><code class="json-code">{{ l.dados }}</code></td><td>{{ l.erro|default:'—' }}</td></tr>{% endfor %}</tbody></table></div>
+<div class="actions"><form method="post" action="{% url 'importacao_confirmar' token %}">{% csrf_token %}<button class="btn btn-primary" {% if preview.validas == 0 %}disabled{% endif %}>Confirmar e guardar</button></form><a class="btn btn-secondary" href="{% url 'importacao_excel' %}">Cancelar</a></div>
+{% endblock %}

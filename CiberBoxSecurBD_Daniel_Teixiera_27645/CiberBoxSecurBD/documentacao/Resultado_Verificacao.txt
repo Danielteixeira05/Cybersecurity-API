@@ -1,0 +1,35 @@
+[OK] ligação à base de dados ciberbox_bd como ciberbox_user
+     PostgreSQL 17.10 (Debian 17.10-0+deb13u1) on x86_64-pc-linux-gnu
+[OK] 17 tabelas do domínio encontradas
+[OK] autenticação PBKDF2 do administrador
+[OK] password errada é rejeitada
+[OK] cinco consultas do dashboard executadas
+[OK] dashboard inclui os três estados NIS2
+[OK] top 5 de clientes com incidentes
+[OK] documentos agregados por cliente e mês
+[OK] distribuição pelos três perfis
+[OK] tempo médio de resolução calculado
+[OK] CREATE e SELECT de cliente por SQL direto
+[OK] UPDATE de cliente por SQL direto
+[OK] DELETE de cliente por SQL direto
+[OK] modelo Excel de ativos analisado
+[OK] modelo Excel de incidentes analisado
+[OK] persistência transacional do lote Excel
+[OK] relatório por linha da importação
+[OK] página de login responde
+[OK] login web e redirecionamento para dashboard
+[OK] rota autenticada /
+[OK] rota autenticada /clientes/
+[OK] rota autenticada /utilizadores/
+[OK] rota autenticada /ativos/
+[OK] rota autenticada /incidentes/
+[OK] rota autenticada /avaliacoes/
+[OK] rota autenticada /documentos/
+[OK] rota autenticada /pedidos/
+[OK] rota autenticada /importacoes/
+[OK] rota autenticada /logs/
+[OK] cliente acede à sua organização
+[OK] cliente não acede a outra organização
+[OK] perfil Cliente é impedido de gerir utilizadores
+
+Verificação concluída sem erros.

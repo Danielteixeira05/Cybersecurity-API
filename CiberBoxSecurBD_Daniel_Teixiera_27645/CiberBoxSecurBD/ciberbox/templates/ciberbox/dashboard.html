@@ -1,0 +1,26 @@
+{% extends 'ciberbox/base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Dashboard obrigatório</h1><p class="muted">Indicadores calculados pelas cinco queries SELECT da Ficha 9.</p></div></div>
+
+<section><h2>1. Clientes por estado de conformidade NIS2</h2><div class="kpi-grid">
+{% for item in conformidade %}<article class="kpi"><span>{{ item.estado }}</span><strong>{{ item.numero_clientes }}</strong></article>{% empty %}<p>Sem dados.</p>{% endfor %}
+</div></section>
+
+<div class="two-columns">
+<section class="card"><h2>2. Top 5 clientes por incidentes</h2><table><thead><tr><th>Cliente</th><th>Total</th></tr></thead><tbody>
+{% for item in top_incidentes %}<tr><td>{{ item.nome }}</td><td><strong>{{ item.total_incidentes }}</strong></td></tr>{% empty %}<tr><td colspan="2">Sem dados.</td></tr>{% endfor %}
+</tbody></table></section>
+<section class="card"><h2>4. Utilizadores por perfil</h2><table><thead><tr><th>Perfil</th><th>Total</th><th>Ativos</th></tr></thead><tbody>
+{% for item in utilizadores_perfil %}<tr><td>{{ item.perfil }}</td><td>{{ item.total_utilizadores }}</td><td>{{ item.utilizadores_ativos }}</td></tr>{% endfor %}
+</tbody></table></section>
+</div>
+
+<section class="card"><h2>3. Documentos por cliente e por mês</h2><div class="table-wrap"><table><thead><tr><th>Mês</th><th>Cliente</th><th>Total</th></tr></thead><tbody>
+{% for item in documentos_mes %}<tr><td>{{ item.mes|date:'m/Y' }}</td><td>{{ item.nome }}</td><td>{{ item.total_documentos }}</td></tr>{% empty %}<tr><td colspan="3">Sem dados.</td></tr>{% endfor %}
+</tbody></table></div></section>
+
+<section class="card"><h2>5. Estado dos pedidos e tempo médio de resolução</h2><table><thead><tr><th>Estado</th><th>Pedidos</th><th>Tempo médio (horas)</th></tr></thead><tbody>
+{% for item in pedidos_estado %}<tr><td><span class="badge">{{ item.estado }}</span></td><td>{{ item.total_pedidos }}</td><td>{{ item.tempo_medio_resolucao_horas|default:'—' }}</td></tr>{% endfor %}
+</tbody></table></section>
+{% endblock %}

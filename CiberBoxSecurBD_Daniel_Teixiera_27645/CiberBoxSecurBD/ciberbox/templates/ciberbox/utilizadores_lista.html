@@ -1,0 +1,5 @@
+{% extends 'ciberbox/base.html' %}{% block title %}Utilizadores{% endblock %}{% block content %}
+<div class="page-header"><div><h1>Utilizadores</h1><p class="muted">Perfis Administrador, Colaborador e Cliente.</p></div><a class="btn btn-primary" href="{% url 'utilizador_criar' %}">Novo utilizador</a></div>
+<div class="card table-wrap"><table><thead><tr><th>Nome</th><th>Email</th><th>Perfil</th><th>Cliente associado</th><th>Último acesso</th><th>Estado</th><th></th></tr></thead><tbody>
+{% for u in utilizadores %}<tr><td>{{ u.nome }}</td><td>{{ u.email }}</td><td>{{ u.perfil_nome }}</td><td>{{ u.clientes|default:'—' }}</td><td>{{ u.ultimo_acesso_em|date:'d/m/Y H:i'|default:'—' }}</td><td>{% if u.ativo %}<span class="badge success">Ativo</span>{% else %}<span class="badge danger">Inativo</span>{% endif %}</td><td class="actions-inline"><a class="btn btn-small" href="{% url 'utilizador_editar' u.id %}">Editar</a><form method="post" action="{% url 'utilizador_alterar_estado' u.id %}">{% csrf_token %}<button class="btn btn-small">{% if u.ativo %}Desativar{% else %}Ativar{% endif %}</button></form></td></tr>{% endfor %}
+</tbody></table></div>{% endblock %}

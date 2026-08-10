@@ -1,0 +1,19 @@
+{% extends 'ciberbox/base.html' %}{% load static %}
+{% block title %}Login - CiberBoxSecurBD{% endblock %}
+{% block content %}
+<div class="login-card">
+    <img src="{% static 'ciberbox/img/logo.png' %}" alt="CiberBoxSecur" class="login-logo">
+    <h1>Área privada</h1>
+    <p class="muted">Aplicação Django com PostgreSQL e SQL direto.</p>
+    <form method="post" novalidate>{% csrf_token %}
+        {% include 'ciberbox/form_campos.html' with form=form %}
+        <button type="submit" class="btn btn-primary btn-full">Entrar</button>
+    </form>
+    <div class="demo-box">
+        <strong>Contas de demonstração</strong><br>
+        admin@ciberbox.local / Demo2026!<br>
+        colaborador@ciberbox.local / Demo2026!<br>
+        cliente1@ciberbox.local / Demo2026!
+    </div>
+</div>
+{% endblock %}
