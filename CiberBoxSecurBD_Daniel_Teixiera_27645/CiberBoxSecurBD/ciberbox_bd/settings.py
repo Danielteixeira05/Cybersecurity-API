@@ -158,11 +158,13 @@ CSRF_TRUSTED_ORIGINS = _parse_cors_list(os.getenv('DJANGO_CSRF_TRUSTED_ORIGINS',
 CORS_ALLOWED_ORIGINS = _parse_cors_list(os.getenv('DJANGO_CORS_ALLOWED_ORIGINS', ''))
 
 _vercel_frontend_defaults = [
-    'https://cybersecurity-interface.vercel.app',
+    'https://cybersecurity-interface-nu.vercel.app',
     'https://cybersecurity-frontend.vercel.app',
     'https://ciberboxsecur.vercel.app',
     'https://ciberboxsecur-interface.vercel.app',
 ]
+CORS_ALLOWED_ORIGIN_REGEXES = []
+
 if not DEBUG:
     for _v in _vercel_vars:
         _val = os.getenv(_v)
@@ -178,6 +180,20 @@ if not DEBUG:
             CORS_ALLOWED_ORIGINS.append(_u)
         if _u not in CSRF_TRUSTED_ORIGINS:
             CSRF_TRUSTED_ORIGINS.append(_u)
+    if '.vercel.app' not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append('.vercel.app')
+    if '*.vercel.app' not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append('*.vercel.app')
+
+    if os.getenv('DJANGO_CORS_ALLOW_VERCEL_WILDCARD', 'True').lower() == 'true':
+        CORS_ALLOWED_ORIGIN_REGEXES += [
+            r'^https://[a-zA-Z0-9-]+\.vercel\.app$',
+            r'^https://[a-zA-Z0-9-]+-git-[a-zA-Z0-9-]+\.vercel\.app$',
+            r'^https://[a-zA-Z0-9-]+--[a-zA-Z0-9-]+\.vercel\.app$',
+        ]
+    _cors_extra = _parse_cors_list(os.getenv('DJANGO_CORS_ALLOWED_ORIGIN_REGEXES', ''))
+    if _cors_extra:
+        CORS_ALLOWED_ORIGIN_REGEXES += _cors_extra
 
 if DEBUG:
     CORS_ALLOWED_ORIGINS = list(set(
