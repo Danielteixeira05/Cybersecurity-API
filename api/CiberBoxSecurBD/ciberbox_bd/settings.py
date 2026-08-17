@@ -134,7 +134,7 @@ SESSION_ENGINE = 'django.contrib.sessions.backends.signed_cookies'
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
 SESSION_COOKIE_SECURE = os.getenv('DJANGO_SECURE_COOKIES', 'False').lower() == 'true'
-CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_HTTPONLY = False
 CSRF_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_SECURE = SESSION_COOKIE_SECURE
 
@@ -180,10 +180,10 @@ if not DEBUG:
             CORS_ALLOWED_ORIGINS.append(_u)
         if _u not in CSRF_TRUSTED_ORIGINS:
             CSRF_TRUSTED_ORIGINS.append(_u)
-    if '.vercel.app' not in CSRF_TRUSTED_ORIGINS:
-        CSRF_TRUSTED_ORIGINS.append('.vercel.app')
-    if '*.vercel.app' not in CSRF_TRUSTED_ORIGINS:
-        CSRF_TRUSTED_ORIGINS.append('*.vercel.app')
+    if 'https://.vercel.app' not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append('https://.vercel.app')
+    if 'https://*.vercel.app' not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append('https://*.vercel.app')
 
     if os.getenv('DJANGO_CORS_ALLOW_VERCEL_WILDCARD', 'True').lower() == 'true':
         CORS_ALLOWED_ORIGIN_REGEXES += [
