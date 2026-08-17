@@ -37,7 +37,7 @@ def _parse_pg_url(url):
         url,
     )
     if not m:
-        raise ValueError(f'DATABASE_URL invalida: {url[:30]}...')
+        raise ValueError('DATABASE_URL invalida')
     d = m.groupdict()
     return {
         'NAME': d['db'],
@@ -47,18 +47,82 @@ def _parse_pg_url(url):
         'PORT': d['port'] or '5432',
     }
 
+
+_estamos_no_vercel = any(os.getenv(v) for v in _vercel_vars)
+_SECURE = (
+    os.getenv('DJANGO_SECURE_COOKIES', 'False').lower() == 'true'
+    or (_estamos_no_vercel and not DEBUG)
+)
+
+
+class VercelCorsMiddleware:
+    """Middleware CORS minimo custom (sem dependencias). Suporta wildcard *.vercel.app"""
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def _origin_allowed(self, origin):
+        if not origin:
+            return False
+        if origin in (
+            'http://localhost:5173',
+            'http://localhost:8443',
+            'http://127.0.0.1:5173',
+            'http://127.0.0.1:8443',
+            'http://localhost:3000',
+            'http://127.0.0.1:3000',
+            'http://localhost',
+            'capacitor://localhost',
+            'https://cybersecurity-interface.vercel.app',
+            'https://cybersecurity-interface-nu.vercel.app',
+            'https://cybersecurity-frontend.vercel.app',
+            'https://ciberboxsecur.vercel.app',
+            'https://ciberboxsecur-interface.vercel.app',
+        ):
+            return True
+        if origin.endswith('.vercel.app') and (not DEBUG or os.getenv('DJANGO_CORS_ALLOW_VERCEL_WILDCARD', 'True').lower() == 'true'):
+            return True
+        extra = os.getenv('DJANGO_CORS_ALLOWED_ORIGINS', '')
+        if extra and origin in [x.strip() for x in extra.split(',') if x.strip()]:
+            return True
+        return False
+
+    def __call__(self, request):
+        origin = request.META.get('HTTP_ORIGIN')
+        allowed = self._origin_allowed(origin)
+
+        if request.method == 'OPTIONS' and allowed:
+            from django.http import HttpResponse
+            response = HttpResponse(status=204)
+            response['Access-Control-Allow-Origin'] = origin
+            response['Access-Control-Allow-Credentials'] = 'true'
+            response['Access-Control-Allow-Methods'] = 'GET,POST,PUT,PATCH,DELETE,OPTIONS,HEAD'
+            response['Access-Control-Allow-Headers'] = 'Content-Type,X-CSRFToken,Authorization,Accept,Origin,X-Requested-With'
+            response['Access-Control-Expose-Headers'] = 'Content-Type,X-CSRFToken'
+            response['Access-Control-Max-Age'] = '86400'
+            response['Vary'] = 'Origin'
+            return response
+
+        response = self.get_response(request)
+        if allowed:
+            response['Access-Control-Allow-Origin'] = origin
+            response['Access-Control-Allow-Credentials'] = 'true'
+            response['Access-Control-Expose-Headers'] = 'Content-Type,X-CSRFToken'
+            response['Vary'] = 'Origin'
+        return response
+
+
 INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'corsheaders',
     'ciberbox',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
+    'ciberbox_bd.settings.VercelCorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -84,6 +148,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'ciberbox_bd.wsgi.application'
+
 
 _db_url = os.getenv('DATABASE_URL')
 if _db_url:
@@ -135,12 +200,6 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-_estamos_no_vercel = any(os.getenv(v) for v in _vercel_vars)
-_SECURE = (
-    os.getenv('DJANGO_SECURE_COOKIES', 'False').lower() == 'true'
-    or (_estamos_no_vercel and not DEBUG)
-)
-
 SESSION_ENGINE = 'django.contrib.sessions.backends.signed_cookies'
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
@@ -148,105 +207,61 @@ SESSION_COOKIE_SECURE = _SECURE
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_SECURE = _SECURE
+CSRF_HEADER_NAME = 'HTTP_X_CSRFTOKEN'
+CSRF_COOKIE_NAME = 'csrftoken'
 
-SECURE_CONTENT_TYPE_NOSNIFF = True
-X_FRAME_OPTIONS = 'DENY'
-SECURE_REFERRER_POLICY = 'same-origin'
 
-DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
-FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
-
-LOGIN_URL = '/login/'
-
-# ========== REST API / CORS (frontend React separado) ==========
-def _parse_cors_list(raw):
+def _parse_list(raw):
     if not raw:
         return []
     return [x.strip() for x in raw.split(',') if x.strip()]
 
-CORS_ALLOW_CREDENTIALS = True
-CSRF_TRUSTED_ORIGINS = _parse_cors_list(os.getenv('DJANGO_CSRF_TRUSTED_ORIGINS', ''))
-CORS_ALLOWED_ORIGINS = _parse_cors_list(os.getenv('DJANGO_CORS_ALLOWED_ORIGINS', ''))
 
-_vercel_frontend_defaults = [
+CSRF_TRUSTED_ORIGINS = _parse_list(os.getenv('DJANGO_CSRF_TRUSTED_ORIGINS', ''))
+
+_csrf_defaults = [
+    'http://localhost:5173',
+    'http://localhost:8443',
+    'http://127.0.0.1:5173',
+    'http://127.0.0.1:8443',
+    'https://cybersecurity-interface.vercel.app',
     'https://cybersecurity-interface-nu.vercel.app',
     'https://cybersecurity-frontend.vercel.app',
     'https://ciberboxsecur.vercel.app',
     'https://ciberboxsecur-interface.vercel.app',
 ]
-CORS_ALLOWED_ORIGIN_REGEXES = []
+for _x in _csrf_defaults:
+    if _x not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(_x)
 
-if not DEBUG:
+if not DEBUG or _SECURE:
+    for _wild in ('.vercel.app', '*.vercel.app'):
+        if _wild not in CSRF_TRUSTED_ORIGINS:
+            CSRF_TRUSTED_ORIGINS.append(_wild)
     for _v in _vercel_vars:
         _val = os.getenv(_v)
         if _val:
             for _proto in ('https://', 'http://'):
-                _url = f"{_proto}{_val.rstrip('/')}"
+                _url = _proto + _val.rstrip('/')
                 if _url not in CSRF_TRUSTED_ORIGINS:
                     CSRF_TRUSTED_ORIGINS.append(_url)
-                if _url not in CORS_ALLOWED_ORIGINS:
-                    CORS_ALLOWED_ORIGINS.append(_url)
-    for _u in _vercel_frontend_defaults:
-        if _u not in CORS_ALLOWED_ORIGINS:
-            CORS_ALLOWED_ORIGINS.append(_u)
-        if _u not in CSRF_TRUSTED_ORIGINS:
-            CSRF_TRUSTED_ORIGINS.append(_u)
-    if '.vercel.app' not in CSRF_TRUSTED_ORIGINS:
-        CSRF_TRUSTED_ORIGINS.append('.vercel.app')
-    if '*.vercel.app' not in CSRF_TRUSTED_ORIGINS:
-        CSRF_TRUSTED_ORIGINS.append('*.vercel.app')
-
-    if os.getenv('DJANGO_CORS_ALLOW_VERCEL_WILDCARD', 'True').lower() == 'true':
-        CORS_ALLOWED_ORIGIN_REGEXES += [
-            r'^https://[a-zA-Z0-9-]+\.vercel\.app$',
-            r'^https://[a-zA-Z0-9-]+-git-[a-zA-Z0-9-]+\.vercel\.app$',
-            r'^https://[a-zA-Z0-9-]+--[a-zA-Z0-9-]+\.vercel\.app$',
-        ]
-    _cors_extra = _parse_cors_list(os.getenv('DJANGO_CORS_ALLOWED_ORIGIN_REGEXES', ''))
-    if _cors_extra:
-        CORS_ALLOWED_ORIGIN_REGEXES += _cors_extra
-
-if DEBUG:
-    CORS_ALLOWED_ORIGINS = list(set(
-        CORS_ALLOWED_ORIGINS + [
-            'http://localhost:5173',
-            'http://localhost:8443',
-            'http://127.0.0.1:5173',
-            'http://127.0.0.1:8443',
-            'http://localhost:3000',
-            'http://127.0.0.1:3000',
-            'capacitor://localhost',
-            'http://localhost',
-        ]
-    ))
-    CSRF_TRUSTED_ORIGINS = list(set(CSRF_TRUSTED_ORIGINS + [
-        'http://localhost:8443',
-        'http://localhost:5173',
-        'http://127.0.0.1:8443',
-        'http://127.0.0.1:5173',
-    ]))
-CORS_ALLOW_ALL_ORIGINS = (
-    DEBUG and os.getenv('DJANGO_CORS_ALLOW_ALL', 'True').lower() == 'true'
-    and not CORS_ALLOWED_ORIGINS
-)
-if not DEBUG or _SECURE:
-    CSRF_COOKIE_SAMESITE = 'None'
     SESSION_COOKIE_SAMESITE = 'None'
+    CSRF_COOKIE_SAMESITE = 'None'
     CSRF_COOKIE_HTTPONLY = False
-    CSRF_COOKIE_SECURE = True
     SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
     if os.getenv('DJANGO_CSRF_COOKIE_DOMAIN'):
         CSRF_COOKIE_DOMAIN = os.getenv('DJANGO_CSRF_COOKIE_DOMAIN')
         SESSION_COOKIE_DOMAIN = CSRF_COOKIE_DOMAIN
-else:
-    CSRF_COOKIE_SAMESITE = 'Lax'
-    SESSION_COOKIE_SAMESITE = 'Lax'
-    CSRF_COOKIE_SECURE = False
-    SESSION_COOKIE_SECURE = False
 
-CORS_EXPOSE_HEADERS = ['Content-Type', 'X-CSRFToken']
-CSRF_HEADER_NAME = 'HTTP_X_CSRFTOKEN'
-CSRF_COOKIE_NAME = 'csrftoken'
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'SAMEORIGIN'
+SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
+
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
+
+LOGIN_URL = '/login/'
 
 LOGGING = {
     'version': 1,
