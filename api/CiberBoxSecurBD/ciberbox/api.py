@@ -80,9 +80,9 @@ def _map_perfil_role(p: str | None) -> str | None:
 
 
 @require_http_methods(['GET'])
-def csrf_view(request: HttpRequest) -> HttpResponse:
-    get_token(request)
-    return HttpResponse(status=204)
+def csrf_view(request: HttpRequest) -> JsonResponse:
+    token = get_token(request)
+    return JsonResponse({'csrfToken': token})
 
 
 @require_http_methods(['POST'])
