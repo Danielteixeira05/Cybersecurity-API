@@ -1,10 +1,16 @@
 from pathlib import Path
 import os
 import re
-from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-load_dotenv(BASE_DIR / '.env')
+
+try:
+    from dotenv import load_dotenv
+    _env_path = BASE_DIR / '.env'
+    if _env_path.is_file():
+        load_dotenv(_env_path)
+except Exception:
+    pass
 
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'alterar-esta-chave-em-producao')
 DEBUG = os.getenv('DJANGO_DEBUG', 'True').lower() == 'true'
@@ -25,7 +31,7 @@ if DEBUG:
     ALLOWED_HOSTS = list(set(ALLOWED_HOSTS + ['*']))
 
 
-def _parse_pg_url(url: str) -> dict:
+def _parse_pg_url(url):
     m = re.match(
         r'^postgres(?:ql)?://(?P<user>[^:@]+)(?::(?P<pass>[^@]*))?@(?P<host>[^:/]+)(?::(?P<port>\d+))?/(?P<db>[^?]+)',
         url,
@@ -129,14 +135,19 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# As sessoes ficam num cookie assinado e nao exigem tabelas do ORM.
+_estamos_no_vercel = any(os.getenv(v) for v in _vercel_vars)
+_SECURE = (
+    os.getenv('DJANGO_SECURE_COOKIES', 'False').lower() == 'true'
+    or (_estamos_no_vercel and not DEBUG)
+)
+
 SESSION_ENGINE = 'django.contrib.sessions.backends.signed_cookies'
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
-SESSION_COOKIE_SECURE = os.getenv('DJANGO_SECURE_COOKIES', 'False').lower() == 'true'
+SESSION_COOKIE_SECURE = _SECURE
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = 'Lax'
-CSRF_COOKIE_SECURE = SESSION_COOKIE_SECURE
+CSRF_COOKIE_SECURE = _SECURE
 
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
@@ -148,7 +159,7 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
 LOGIN_URL = '/login/'
 
 # ========== REST API / CORS (frontend React separado) ==========
-def _parse_cors_list(raw: str | None) -> list[str]:
+def _parse_cors_list(raw):
     if not raw:
         return []
     return [x.strip() for x in raw.split(',') if x.strip()]
@@ -218,7 +229,7 @@ CORS_ALLOW_ALL_ORIGINS = (
     DEBUG and os.getenv('DJANGO_CORS_ALLOW_ALL', 'True').lower() == 'true'
     and not CORS_ALLOWED_ORIGINS
 )
-if not DEBUG:
+if not DEBUG or _SECURE:
     CSRF_COOKIE_SAMESITE = 'None'
     SESSION_COOKIE_SAMESITE = 'None'
     CSRF_COOKIE_HTTPONLY = False
